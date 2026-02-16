@@ -7,6 +7,8 @@ import ItemDetails from '../pages/ItemDetails';
 import KitchenDashboard from '../pages/KitchenDashboard';
 import OrderHistory from '../pages/OrderHistory';
 import AdminPanel from '../pages/AdminPanel';
+import Profile from '../pages/Profile';
+import { AuthProvider } from '../context/AuthContext';
 
 const ProtectedRoute = ({ children }) => {
   const token = localStorage.getItem('token');
@@ -19,74 +21,93 @@ const RoleRoute = ({ children, allowedRoles }) => {
   return token && allowedRoles.includes(user.role) ? children : <Navigate to="/" />;
 };
 
+const CustomerOnlyRoute = ({ children }) => {
+  const token = localStorage.getItem('token');
+  const user = JSON.parse(localStorage.getItem('user') || '{}');
+  return token && user.role === 'CUSTOMER' ? children : <Navigate to="/" />;
+};
+
 export default function AppRouter() {
   return (
-    <BrowserRouter>
-      <Routes>
-        <Route path="/login" element={<Login />} />
+    <AuthProvider>
+      <BrowserRouter>
+        <Routes>
+          <Route path="/login" element={<Login />} />
 
-        <Route
-          path="/"
-          element={
-            <MainLayout>
-              <Home />
-            </MainLayout>
-          }
-        />
-
-        <Route
-          path="/item/:id"
-          element={
-            <MainLayout>
-              <ItemDetails />
-            </MainLayout>
-          }
-        />
-
-        <Route
-          path="/cart"
-          element={
-            <ProtectedRoute>
+          <Route
+            path="/"
+            element={
               <MainLayout>
-                <Cart />
+                <Home />
               </MainLayout>
-            </ProtectedRoute>
-          }
-        />
+            }
+          />
 
-        <Route
-          path="/orders"
-          element={
-            <ProtectedRoute>
+          <Route
+            path="/item/:id"
+            element={
               <MainLayout>
-                <OrderHistory />
+                <ItemDetails />
               </MainLayout>
-            </ProtectedRoute>
-          }
-        />
+            }
+          />
 
-        <Route
-          path="/kitchen"
-          element={
-            <RoleRoute allowedRoles={['KITCHEN_OWNER', 'ADMIN']}>
-              <MainLayout>
-                <KitchenDashboard />
-              </MainLayout>
-            </RoleRoute>
-          }
-        />
+          <Route
+            path="/profile"
+            element={
+              <CustomerOnlyRoute>
+                <MainLayout>
+                  <Profile />
+                </MainLayout>
+              </CustomerOnlyRoute>
+            }
+          />
 
-        <Route
-          path="/admin"
-          element={
-            <RoleRoute allowedRoles={['ADMIN']}>
-              <MainLayout>
-                <AdminPanel />
-              </MainLayout>
-            </RoleRoute>
-          }
-        />
-      </Routes>
-    </BrowserRouter>
+          <Route
+            path="/cart"
+            element={
+              <ProtectedRoute>
+                <MainLayout>
+                  <Cart />
+                </MainLayout>
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/orders"
+            element={
+              <ProtectedRoute>
+                <MainLayout>
+                  <OrderHistory />
+                </MainLayout>
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/kitchen"
+            element={
+              <RoleRoute allowedRoles={['KITCHEN_OWNER', 'ADMIN']}>
+                <MainLayout>
+                  <KitchenDashboard />
+                </MainLayout>
+              </RoleRoute>
+            }
+          />
+
+          <Route
+            path="/admin"
+            element={
+              <RoleRoute allowedRoles={['ADMIN']}>
+                <MainLayout>
+                  <AdminPanel />
+                </MainLayout>
+              </RoleRoute>
+            }
+          />
+        </Routes>
+      </BrowserRouter>
+    </AuthProvider>
   );
 }

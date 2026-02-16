@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { authAPI } from '../services/api';
+import { useAuth } from '../context/AuthContext';
 
 export default function Login() {
   const [isLogin, setIsLogin] = useState(true);
@@ -11,6 +12,7 @@ export default function Login() {
   const [error, setError] = useState('');
   const navigate = useNavigate();
   const location = useLocation();
+  const { login } = useAuth();
 
   useEffect(() => {
     const token = localStorage.getItem('token');
@@ -28,8 +30,7 @@ export default function Login() {
       const data = isLogin ? { email, password } : { name, email, password };
       const response = isLogin ? await authAPI.login(data) : await authAPI.register(data);
 
-      localStorage.setItem('token', response.data.token);
-      localStorage.setItem('user', JSON.stringify(response.data.user));
+      login(response.data.user, response.data.token);
 
       const from = location.state?.from?.pathname || '/';
       navigate(from);
