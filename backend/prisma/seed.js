@@ -1,6 +1,28 @@
 import { PrismaClient } from '@prisma/client';
+import bcryptjs from 'bcryptjs';
 
 const prisma = new PrismaClient();
+
+const testUsers = [
+  {
+    name: "Admin User",
+    email: "admin@foodbliss.com",
+    password: "Admin@123",
+    role: "ADMIN"
+  },
+  {
+    name: "Kitchen Owner",
+    email: "kitchen@foodbliss.com",
+    password: "Kitchen@123",
+    role: "KITCHEN_OWNER"
+  },
+  {
+    name: "John Doe",
+    email: "customer@foodbliss.com",
+    password: "Customer@123",
+    role: "CUSTOMER"
+  }
+];
 
 const menuItems = [
   {
@@ -56,11 +78,31 @@ const menuItems = [
 async function main() {
   console.log('🌱 Starting database seed...');
 
-  // Clear existing items (optional, comment out to preserve)
+  // Clear existing data (respecting foreign keys)
+  await prisma.orderItem.deleteMany({});
+  await prisma.order.deleteMany({});
+  await prisma.cartItem.deleteMany({});
+  await prisma.user.deleteMany({});
   await prisma.menuItem.deleteMany({});
-  console.log('✓ Cleared existing menu items');
+  console.log('✓ Cleared existing data');
+
+  // Create test users
+  console.log('\n📝 Creating test users...');
+  for (const user of testUsers) {
+    const hashedPassword = await bcryptjs.hash(user.password, 10);
+    const created = await prisma.user.create({
+      data: {
+        name: user.name,
+        email: user.email,
+        passwordHash: hashedPassword,
+        role: user.role
+      }
+    });
+    console.log(`✓ Created ${user.role}: ${user.email} (password: ${user.password})`);
+  }
 
   // Create menu items
+  console.log('\n🍽️  Creating menu items...');
   for (const item of menuItems) {
     const created = await prisma.menuItem.create({
       data: {

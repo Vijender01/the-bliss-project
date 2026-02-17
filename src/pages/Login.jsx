@@ -32,8 +32,15 @@ export default function Login() {
 
       login(response.data.user, response.data.token);
 
-      const from = location.state?.from?.pathname || '/';
-      navigate(from);
+      const userRole = response.data.user.role;
+      if (userRole === 'ADMIN') {
+        navigate('/admin');
+      } else if (userRole === 'KITCHEN_OWNER') {
+        navigate('/kitchen');
+      } else {
+        const from = location.state?.from?.pathname || '/';
+        navigate(from);
+      }
     } catch (err) {
       setError(err.response?.data?.error || 'Authentication failed');
     } finally {
