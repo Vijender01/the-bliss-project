@@ -49,12 +49,24 @@ export function SocketProvider({ children }) {
 
         const newSocket = io(socketUrl, {
             auth: { token },
-            transports: ['websocket', 'polling'],
+            transports: ['websocket'], // Pure WebSocket for faster iPad/Safari upgrade
             reconnection: true,
-            reconnectionDelay: 1000,
-            reconnectionAttempts: 20,
+            reconnectionDelay: 500,
+            reconnectionDelayMax: 2000,
+            reconnectionAttempts: Infinity, // Keep retrying if backgrounded
             path: '/socket.io/',
+            timeout: 20000,
         });
+
+        // Handle iOS background/suspend by triggering refetch on resume
+        const handleVisibilityChange = () => {
+            if (document.visibilityState === 'visible') {
+                console.log('🔄 App resumed - checking socket sync');
+                if (!newSocket.connected) newSocket.connect();
+                setLastOrderEvent({ type: 'RESUME_SYNC', _ts: Date.now() });
+            }
+        };
+        window.addEventListener('visibilitychange', handleVisibilityChange);
 
         newSocket.on('connect', () => {
             console.log(`⚡ Socket connected! ID: ${newSocket.id}, Role: ${user.role}`);
@@ -85,6 +97,7 @@ export function SocketProvider({ children }) {
 
         return () => {
             console.log('🔌 Disconnecting socket');
+            window.removeEventListener('visibilitychange', handleVisibilityChange);
             newSocket.disconnect();
         };
     }, [isAuthenticated, user?.id]);
