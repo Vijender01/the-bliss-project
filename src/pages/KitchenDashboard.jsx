@@ -1,16 +1,23 @@
 import { useState, useEffect } from 'react';
 import { orderAPI } from '../services/api';
+import { useSocket } from '../context/SocketContext';
 
 export default function KitchenDashboard() {
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
   const [message, setMessage] = useState('');
+  const { lastOrderEvent } = useSocket();
 
   useEffect(() => {
     fetchOrders();
-    const interval = setInterval(fetchOrders, 10000);
-    return () => clearInterval(interval);
   }, []);
+
+  // Auto-refresh on socket events
+  useEffect(() => {
+    if (lastOrderEvent) {
+      fetchOrders();
+    }
+  }, [lastOrderEvent]);
 
   const fetchOrders = async () => {
     try {
@@ -61,7 +68,7 @@ export default function KitchenDashboard() {
       ) : (
         <div className="space-y-4">
           {orders.map((order) => (
-            <div key={order.id} className="bg-white p-6 rounded-lg shadow">
+            <div key={order.id} className={`bg-white p-6 rounded-lg shadow ${order.status === 'CANCELLED' ? 'opacity-60 border-l-4 border-red-400' : ''}`}>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
                 <div>
                   <p className="text-gray-600 text-sm">Order ID</p>
@@ -73,7 +80,7 @@ export default function KitchenDashboard() {
                 </div>
                 <div>
                   <p className="text-gray-600 text-sm">Total Amount</p>
-                  <p className="text-lg font-bold text-gray-800">₹{order.totalAmount.toFixed(2)}</p>
+                  <p className="text-lg font-bold text-gray-800">₹{order.totalAmount.toFixed(0)}</p>
                 </div>
               </div>
 
@@ -83,29 +90,47 @@ export default function KitchenDashboard() {
                   {order.items.map((item) => (
                     <div key={item.id} className="flex justify-between text-sm">
                       <span>{item.menuItem.name} × {item.quantity}</span>
-                      <span className="font-semibold">₹{(item.price * item.quantity).toFixed(2)}</span>
+                      <span className="font-semibold">₹{(item.price * item.quantity).toFixed(0)}</span>
                     </div>
                   ))}
                 </div>
               </div>
 
+              {/* Special Instructions */}
+              {order.specialInstructions && (
+                <div className="bg-yellow-50 border border-yellow-200 rounded-xl p-3 mb-4">
+                  <p className="text-xs text-yellow-700 font-bold mb-1">📝 Special Instructions</p>
+                  <p className="text-sm text-yellow-900">{order.specialInstructions}</p>
+                </div>
+              )}
+
+              {/* Cancellation Request */}
+              {order.cancellationRequested && order.status !== 'CANCELLED' && (
+                <div className="bg-orange-50 border border-orange-200 rounded-xl p-3 mb-4">
+                  <p className="text-xs text-orange-700 font-bold">📩 Cancellation Requested</p>
+                  {order.cancellationReason && <p className="text-sm text-orange-600 mt-1">Reason: {order.cancellationReason}</p>}
+                </div>
+              )}
+
               <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
                 <span className={`px-4 py-2 rounded-full text-sm font-semibold ${getStatusColor(order.status)}`}>
-                  {order.status}
+                  {order.status.replace(/_/g, ' ')}
                 </span>
 
-                <select
-                  value={order.status}
-                  onChange={(e) => handleUpdateStatus(order.id, e.target.value)}
-                  className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500"
-                >
-                  <option value="PLACED">Placed</option>
-                  <option value="STARTED_PREPARING">Preparing</option>
-                  <option value="PREPARED">Prepared</option>
-                  <option value="OUT_FOR_DELIVERY">Out for Delivery</option>
-                  <option value="DELIVERED">Delivered</option>
-                  <option value="CANCELLED">Cancelled</option>
-                </select>
+                {order.status !== 'CANCELLED' && order.status !== 'DELIVERED' && (
+                  <select
+                    value={order.status}
+                    onChange={(e) => handleUpdateStatus(order.id, e.target.value)}
+                    className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500"
+                  >
+                    <option value="PLACED">Placed</option>
+                    <option value="STARTED_PREPARING">Preparing</option>
+                    <option value="PREPARED">Prepared</option>
+                    <option value="OUT_FOR_DELIVERY">Out for Delivery</option>
+                    <option value="DELIVERED">Delivered</option>
+                    <option value="CANCELLED">Cancelled</option>
+                  </select>
+                )}
               </div>
             </div>
           ))}

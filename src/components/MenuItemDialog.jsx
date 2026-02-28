@@ -6,6 +6,7 @@ export default function MenuItemDialog({ isOpen, item, onSave, onClose }) {
         description: '',
         price: '',
         image: '',
+        category: 'BREAKFAST',
     });
     const [saving, setSaving] = useState(false);
 
@@ -18,9 +19,10 @@ export default function MenuItemDialog({ isOpen, item, onSave, onClose }) {
                 description: item.description || '',
                 price: item.price?.toString() || '',
                 image: item.image || '',
+                category: item.category || 'BREAKFAST',
             });
         } else {
-            setForm({ name: '', description: '', price: '', image: '' });
+            setForm({ name: '', description: '', price: '', image: '', category: 'BREAKFAST' });
         }
     }, [item, isOpen]);
 
@@ -49,6 +51,7 @@ export default function MenuItemDialog({ isOpen, item, onSave, onClose }) {
                 description: form.description,
                 price: parseFloat(form.price),
                 image: form.image || null,
+                category: form.category,
             });
             onClose();
         } catch (err) {
@@ -158,6 +161,22 @@ export default function MenuItemDialog({ isOpen, item, onSave, onClose }) {
                                 )}
                             </div>
                         )}
+                    </div>
+
+                    {/* Category */}
+                    <div>
+                        <label className="block text-sm font-semibold text-gray-700 mb-1.5">
+                            Category <span className="text-red-500">*</span>
+                        </label>
+                        <select
+                            name="category"
+                            value={form.category}
+                            onChange={handleChange}
+                            className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-orange-500 focus:border-orange-500 outline-none transition-all text-gray-800 bg-white"
+                        >
+                            <option value="BREAKFAST">🌅 Breakfast (9 AM – 10 AM)</option>
+                            <option value="LUNCH">☀️ Lunch (12:30 PM – 1:30 PM)</option>
+                        </select>
                     </div>
 
                     {/* Actions */}

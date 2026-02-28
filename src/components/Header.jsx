@@ -28,11 +28,13 @@ export default function Header() {
     ],
     KITCHEN_OWNER: [
       { label: 'Kitchen', path: '/kitchen' },
+      { label: 'Summary', path: '/orders-summary' },
       { label: 'Manage Menu', path: '/manage-menu' },
     ],
     ADMIN: [
       { label: 'Admin', path: '/admin' },
       { label: 'Kitchen', path: '/kitchen' },
+      { label: 'Summary', path: '/orders-summary' },
       { label: 'Manage Menu', path: '/manage-menu' },
     ],
   };

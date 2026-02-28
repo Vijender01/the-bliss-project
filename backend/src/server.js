@@ -54,21 +54,26 @@ const authLimiter = rateLimit({
 
 app.use(express.json({ limit: '10kb' }));
 
-const allowedOrigins = isProduction
-  ? [process.env.CORS_ORIGIN || 'http://localhost']
-  : [
-    'http://localhost:5173',
-    'http://localhost:5174',
-    'http://127.0.0.1:5173',
-    'http://127.0.0.1:5174',
-    'http://192.168.29.136:5173',
-    'http://192.168.29.136:5174'
-  ];
+// In production, traffic goes through Nginx → backend is not publicly exposed
+// So we accept any origin (Nginx is the trust boundary)
+const corsOptions = isProduction
+  ? { origin: true, credentials: true }
+  : {
+    origin: [
+      'http://localhost:5173',
+      'http://localhost:5174',
+      'http://127.0.0.1:5173',
+      'http://127.0.0.1:5174',
+      'http://192.168.29.136:5173',
+      'http://192.168.29.136:5174'
+    ],
+    credentials: true,
+  };
 
-app.use(cors({
-  origin: allowedOrigins,
-  credentials: true,
-}));
+// For Socket.io — needs the same origins
+const allowedOrigins = isProduction ? true : corsOptions.origin;
+
+app.use(cors(corsOptions));
 
 // --------------- ROUTES ---------------
 
@@ -135,7 +140,7 @@ const startServer = async () => {
 
     httpServer.listen(PORT, '0.0.0.0', () => {
       console.log(`✓ Server running on http://localhost:${PORT}`);
-      console.log(`✓ CORS origin: ${allowedOrigins.join(', ')}`);
+      console.log(`✓ CORS origin: ${Array.isArray(allowedOrigins) ? allowedOrigins.join(', ') : 'all (via Nginx)'}`);
     });
 
     httpServer.on('error', (err) => {

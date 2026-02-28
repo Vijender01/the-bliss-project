@@ -5,22 +5,29 @@ import { orderAPI } from '../services/api';
 import QuantitySelector from '../components/QuantitySelector';
 
 export default function Cart() {
-  const { items, total, updateQuantity, removeItem, clearCart, fetchCart } = useCart();
+  const { items, total, updateQuantity, removeItem, clearCart } = useCart();
   const [message, setMessage] = useState('');
   const [placing, setPlacing] = useState(false);
+  const [specialInstructions, setSpecialInstructions] = useState('');
   const navigate = useNavigate();
 
+  const wordCount = specialInstructions.trim() ? specialInstructions.trim().split(/\s+/).length : 0;
+
   const handlePlaceOrder = async () => {
+    if (wordCount > 100) {
+      setMessage('Special instructions must be 100 words or less.');
+      return;
+    }
     setPlacing(true);
     try {
-      await orderAPI.place();
+      await orderAPI.place({
+        specialInstructions: specialInstructions.trim() || undefined,
+      });
       setMessage('✓ Order placed successfully!');
       await clearCart();
-      setTimeout(() => {
-        navigate('/orders');
-      }, 1500);
+      setTimeout(() => navigate('/orders'), 1500);
     } catch (error) {
-      setMessage('Failed to place order');
+      setMessage(error.response?.data?.error || 'Failed to place order');
       setPlacing(false);
     }
   };
@@ -49,10 +56,9 @@ export default function Cart() {
         </div>
       ) : (
         <>
-          <div className="space-y-3 mb-8">
+          <div className="space-y-3 mb-6">
             {items.map((ci) => (
               <div key={ci.menuItemId} className="bg-white p-4 sm:p-5 rounded-xl shadow-sm border border-gray-100 flex items-center gap-4">
-                {/* Image */}
                 <div className="w-14 h-14 flex-shrink-0 bg-gradient-to-br from-orange-200 to-orange-300 rounded-xl flex items-center justify-center text-3xl">
                   {ci.menuItem.image?.startsWith('http') ? (
                     <img src={ci.menuItem.image} alt="" className="w-14 h-14 rounded-xl object-cover" />
@@ -60,33 +66,39 @@ export default function Cart() {
                     ci.menuItem.image || '🍽️'
                   )}
                 </div>
-
-                {/* Info */}
                 <div className="flex-1 min-w-0">
                   <h3 className="font-bold text-gray-800">{ci.menuItem.name}</h3>
                   <p className="text-orange-600 font-bold">₹{ci.menuItem.price}</p>
                 </div>
-
-                {/* Quantity */}
                 <QuantitySelector
                   value={ci.quantity}
                   onChange={(q) => updateQuantity(ci.menuItemId, q)}
                   min={0}
                   size="md"
                 />
-
-                {/* Subtotal + Remove */}
                 <div className="text-right min-w-[70px] flex-shrink-0">
                   <p className="font-bold text-gray-800 text-lg">₹{(ci.menuItem.price * ci.quantity).toFixed(0)}</p>
-                  <button
-                    onClick={() => removeItem(ci.menuItemId)}
-                    className="text-red-500 text-xs hover:underline mt-1"
-                  >
-                    Remove
-                  </button>
+                  <button onClick={() => removeItem(ci.menuItemId)} className="text-red-500 text-xs hover:underline mt-1">Remove</button>
                 </div>
               </div>
             ))}
+          </div>
+
+          {/* Special Instructions */}
+          <div className="bg-white p-5 rounded-xl shadow-sm border border-gray-100 mb-6">
+            <label className="block text-sm font-bold text-gray-700 mb-2">
+              📝 Special Instructions <span className="text-gray-400 font-normal">(optional)</span>
+            </label>
+            <textarea
+              value={specialInstructions}
+              onChange={(e) => setSpecialInstructions(e.target.value)}
+              placeholder="Add any special instruction for your order… (e.g., less spicy, no onion, extra sauce)"
+              rows={3}
+              className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-orange-300 focus:border-orange-400 resize-none"
+            />
+            <p className={`text-xs mt-1 ${wordCount > 100 ? 'text-red-500 font-bold' : 'text-gray-400'}`}>
+              {wordCount}/100 words
+            </p>
           </div>
 
           <div className="bg-gradient-to-r from-orange-50 to-amber-50 p-6 rounded-2xl border border-orange-100">
@@ -97,7 +109,7 @@ export default function Cart() {
 
             <button
               onClick={handlePlaceOrder}
-              disabled={placing}
+              disabled={placing || wordCount > 100}
               className="w-full bg-orange-500 hover:bg-orange-600 disabled:bg-orange-300 text-white font-bold py-4 rounded-xl transition-all active:scale-[0.98] shadow-lg shadow-orange-200 flex items-center justify-center gap-2 text-lg"
             >
               {placing ? (

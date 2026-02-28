@@ -6,6 +6,7 @@ import Cart from '../pages/Cart';
 import ItemDetails from '../pages/ItemDetails';
 import KitchenDashboard from '../pages/KitchenDashboard';
 import OrderHistory from '../pages/OrderHistory';
+import OrdersSummary from '../pages/OrdersSummary';
 import AdminPanel from '../pages/AdminPanel';
 import Profile from '../pages/Profile';
 import ManageMenu from '../pages/ManageMenu';
@@ -37,7 +38,6 @@ export default function AppRouter() {
       <CartProvider>
         <SocketProvider>
           <BrowserRouter>
-            {/* Global Alert Modal — appears on ALL pages */}
             <AlertModal />
 
             <Routes>
@@ -56,6 +56,12 @@ export default function AppRouter() {
 
               <Route path="/orders" element={
                 <ProtectedRoute><MainLayout><OrderHistory /></MainLayout></ProtectedRoute>
+              } />
+
+              <Route path="/orders-summary" element={
+                <RoleRoute allowedRoles={['KITCHEN_OWNER', 'ADMIN']}>
+                  <MainLayout><OrdersSummary /></MainLayout>
+                </RoleRoute>
               } />
 
               <Route path="/kitchen" element={
