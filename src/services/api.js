@@ -24,12 +24,23 @@ export const authAPI = {
   login: (data) => api.post('/auth/login', data),
 };
 
-// Menu API
+// Menu API (public)
 export const menuAPI = {
   getAll: () => api.get('/menu'),
   getById: (id) => api.get(`/menu/${id}`),
   create: (data) => api.post('/menu', data),
   update: (id, data) => api.put(`/menu/${id}`, data),
+};
+
+// Kitchen Menu API (protected)
+export const kitchenMenuAPI = {
+  getMenu: (kitchenId) => api.get('/kitchen/menu', { params: kitchenId ? { kitchenId } : {} }),
+  addItem: (data) => api.post('/kitchen/menu', data),
+  updateItem: (id, data) => api.put(`/kitchen/menu/${id}`, data),
+  deleteItem: (id) => api.delete(`/kitchen/menu/${id}`),
+  toggleOutOfStock: (id, isOutOfStock) => api.patch(`/kitchen/menu/${id}/out-of-stock`, { isOutOfStock }),
+  setLimited: (id, data) => api.patch(`/kitchen/menu/${id}/limited`, data),
+  listKitchens: () => api.get('/kitchen/list'),
 };
 
 // Cart API

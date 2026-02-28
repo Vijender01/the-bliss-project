@@ -5,7 +5,11 @@ const prisma = new PrismaClient();
 export const getMenu = async (req, res) => {
   try {
     const items = await prisma.menuItem.findMany({
-      where: { isActive: true },
+      where: {
+        isActive: true,
+        isOutOfStock: false,
+      },
+      include: { kitchen: true },
     });
     res.json(items);
   } catch (error) {

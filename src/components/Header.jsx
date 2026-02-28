@@ -21,10 +21,12 @@ export default function Header() {
     ],
     KITCHEN_OWNER: [
       { label: 'Kitchen', path: '/kitchen' },
+      { label: 'Manage Menu', path: '/manage-menu' },
     ],
     ADMIN: [
       { label: 'Admin', path: '/admin' },
       { label: 'Kitchen', path: '/kitchen' },
+      { label: 'Manage Menu', path: '/manage-menu' },
     ],
   };
 
@@ -43,7 +45,7 @@ export default function Header() {
           {/* Desktop Navigation */}
           <div className="hidden md:flex items-center gap-8">
             <div className="text-sm font-semibold">Order Fresh & Tasty Food</div>
-            
+
             {isAuthenticated && (
               <nav className="flex items-center gap-6">
                 {userNavLinks.map((link) => (
@@ -87,7 +89,7 @@ export default function Header() {
         {mobileMenuOpen && (
           <div className="md:hidden mt-4 pb-4 border-t border-orange-600">
             <div className="text-xs font-semibold mb-4 text-orange-100">Order Fresh & Tasty Food</div>
-            
+
             {isAuthenticated && (
               <nav className="flex flex-col gap-2">
                 {userNavLinks.map((link) => (

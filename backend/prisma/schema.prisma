@@ -28,24 +28,40 @@ model User {
   email     String  @unique
   passwordHash String
   role      UserRole @default(CUSTOMER)
+  kitchenId Int?     @unique
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
+  kitchen   Kitchen? @relation(fields: [kitchenId], references: [id])
   cart      CartItem[]
   orders    Order[]
 }
 
-model MenuItem {
-  id          Int     @id @default(autoincrement())
-  name        String
-  description String
-  price       Float
-  image       String?
-  isActive    Boolean @default(true)
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+model Kitchen {
+  id        Int      @id @default(autoincrement())
+  name      String
+  createdAt DateTime @default(now())
 
-  cartItems CartItem[]
+  owner     User?
+  menuItems MenuItem[]
+}
+
+model MenuItem {
+  id              Int     @id @default(autoincrement())
+  name            String
+  description     String
+  price           Float
+  image           String?
+  isActive        Boolean @default(true)
+  isOutOfStock    Boolean @default(false)
+  isLimited       Boolean @default(false)
+  limitedQuantity Int?
+  kitchenId       Int?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  kitchen    Kitchen?    @relation(fields: [kitchenId], references: [id])
+  cartItems  CartItem[]
   orderItems OrderItem[]
 }
 

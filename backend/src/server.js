@@ -8,6 +8,7 @@ import authRoutes from './routes/auth.js';
 import menuRoutes from './routes/menu.js';
 import cartRoutes from './routes/cart.js';
 import orderRoutes from './routes/orders.js';
+import kitchenRoutes from './routes/kitchen.js';
 
 // Load env — .env.production takes priority when NODE_ENV=production
 const envFile = process.env.NODE_ENV === 'production' ? '.env.production' : '.env';
@@ -32,19 +33,19 @@ app.use(helmet({
 // Explicitly hide x-powered-by (helmet does this too, belt-and-suspenders)
 app.disable('x-powered-by');
 
-// Rate limiting — 100 requests per 15 min window per IP on /api
+// Rate limiting — relaxed in dev, strict in production
 const apiLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
-  max: 100,
+  max: isProduction ? 100 : 1000,
   standardHeaders: true,
   legacyHeaders: false,
   message: { error: 'Too many requests, please try again later.' }
 });
 
-// Stricter limiter for auth endpoints — 20 requests per 15 min
+// Stricter limiter for auth endpoints
 const authLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
-  max: 20,
+  max: isProduction ? 20 : 200,
   standardHeaders: true,
   legacyHeaders: false,
   message: { error: 'Too many login attempts, please try again later.' }
@@ -78,6 +79,7 @@ app.use('/api/auth', authLimiter, authRoutes);
 app.use('/api/menu', apiLimiter, menuRoutes);
 app.use('/api/cart', apiLimiter, cartRoutes);
 app.use('/api/orders', apiLimiter, orderRoutes);
+app.use('/api/kitchen', apiLimiter, kitchenRoutes);
 
 // Health check (no rate limit)
 app.get('/api/health', (req, res) => {

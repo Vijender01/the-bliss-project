@@ -8,6 +8,7 @@ import KitchenDashboard from '../pages/KitchenDashboard';
 import OrderHistory from '../pages/OrderHistory';
 import AdminPanel from '../pages/AdminPanel';
 import Profile from '../pages/Profile';
+import ManageMenu from '../pages/ManageMenu';
 import { AuthProvider } from '../context/AuthContext';
 
 const ProtectedRoute = ({ children }) => {
@@ -102,6 +103,17 @@ export default function AppRouter() {
               <RoleRoute allowedRoles={['ADMIN']}>
                 <MainLayout>
                   <AdminPanel />
+                </MainLayout>
+              </RoleRoute>
+            }
+          />
+
+          <Route
+            path="/manage-menu"
+            element={
+              <RoleRoute allowedRoles={['KITCHEN_OWNER', 'ADMIN']}>
+                <MainLayout>
+                  <ManageMenu />
                 </MainLayout>
               </RoleRoute>
             }
