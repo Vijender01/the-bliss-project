@@ -256,6 +256,91 @@ export const getOrders = async (req, res) => {
   }
 };
 
+export const getOrderDetails = async (req, res) => {
+  try {
+    const userId = req.user.userId;
+    const { id } = req.params;
+
+    const order = await prisma.order.findUnique({
+      where: { id: parseInt(id) },
+      include: {
+        items: { include: { menuItem: true } },
+        user: { select: { name: true } }
+      }
+    });
+
+    if (!order) return res.status(404).json({ error: 'Order not found' });
+
+    // Only owner or admin can view
+    if (order.userId !== userId && req.user.role !== 'ADMIN') {
+      return res.status(403).json({ error: 'Access denied' });
+    }
+
+    res.json(order);
+  } catch (error) {
+    console.error('Get order details error:', error);
+    res.status(500).json({ error: 'Failed to fetch order details' });
+  }
+};
+
+export const markPaymentDone = async (req, res) => {
+  try {
+    const userId = req.user.userId;
+    const { id } = req.params;
+
+    const order = await prisma.order.findUnique({
+      where: { id: parseInt(id) }
+    });
+
+    if (!order) return res.status(404).json({ error: 'Order not found' });
+    if (order.userId !== userId) return res.status(403).json({ error: 'Not your order' });
+
+    const updatedOrder = await prisma.order.update({
+      where: { id: parseInt(id) },
+      data: { paymentStatus: 'PAYMENT_DONE' }
+    });
+
+    // Notify admin
+    emitToAdminAndKitchens('orderUpdated', {
+      type: 'PAYMENT_SUBMITTED',
+      orderId: order.id,
+      paymentStatus: 'PAYMENT_DONE',
+      timestamp: new Date().toISOString(),
+    });
+
+    res.json(updatedOrder);
+  } catch (error) {
+    console.error('Mark payment done error:', error);
+    res.status(500).json({ error: 'Failed to update payment status' });
+  }
+};
+
+export const confirmPayment = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const updatedOrder = await prisma.order.update({
+      where: { id: parseInt(id) },
+      data: { paymentStatus: 'CONFIRMED' },
+      include: { items: { include: { menuItem: true } } }
+    });
+
+    // Notify kitchen/admin
+    const kitchenIds = updatedOrder.items.map(i => i.menuItem.kitchenId);
+    emitToAdminAndKitchens('orderUpdated', {
+      type: 'PAYMENT_CONFIRMED',
+      orderId: updatedOrder.id,
+      paymentStatus: 'CONFIRMED',
+      timestamp: new Date().toISOString(),
+    }, kitchenIds);
+
+    res.json(updatedOrder);
+  } catch (error) {
+    console.error('Confirm payment error:', error);
+    res.status(500).json({ error: 'Failed to confirm payment' });
+  }
+};
+
 export const getAllOrders = async (req, res) => {
   try {
     const orders = await prisma.order.findMany({
@@ -362,6 +447,7 @@ export const getOrdersSummary = async (req, res) => {
         id: o.id,
         customerName: o.user.name,
         status: o.status,
+        paymentStatus: o.paymentStatus,
         totalAmount: o.totalAmount,
         specialInstructions: o.specialInstructions,
         deliveryDate: o.deliveryDate,

@@ -11,6 +11,7 @@ import AdminPanel from '../pages/AdminPanel';
 import Profile from '../pages/Profile';
 import ManageMenu from '../pages/ManageMenu';
 import SystemHealth from '../pages/SystemHealth';
+import PaymentPage from '../pages/PaymentPage';
 import AlertModal from '../components/AlertModal';
 import { AuthProvider } from '../context/AuthContext';
 import { CartProvider } from '../context/CartContext';
@@ -87,6 +88,10 @@ export default function AppRouter() {
                 <RoleRoute allowedRoles={['ADMIN']}>
                   <MainLayout><SystemHealth /></MainLayout>
                 </RoleRoute>
+              } />
+
+              <Route path="/payment/:orderId" element={
+                <ProtectedRoute><MainLayout><PaymentPage /></MainLayout></ProtectedRoute>
               } />
             </Routes>
           </BrowserRouter>

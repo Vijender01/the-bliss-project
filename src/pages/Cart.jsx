@@ -20,12 +20,12 @@ export default function Cart() {
     }
     setPlacing(true);
     try {
-      await orderAPI.place({
+      const response = await orderAPI.place({
         specialInstructions: specialInstructions.trim() || undefined,
       });
-      setMessage('✓ Order placed successfully!');
+      setMessage('✓ Order placed! Redirecting to payment...');
       await clearCart();
-      setTimeout(() => navigate('/orders'), 1500);
+      setTimeout(() => navigate(`/payment/${response.data.id}`), 1500);
     } catch (error) {
       setMessage(error.response?.data?.error || 'Failed to place order');
       setPlacing(false);

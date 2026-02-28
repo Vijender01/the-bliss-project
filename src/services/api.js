@@ -56,10 +56,13 @@ export const cartAPI = {
 export const orderAPI = {
   place: (data) => api.post('/orders', data || {}),
   getMyOrders: () => api.get('/orders'),
+  getById: (id) => api.get(`/orders/${id}`),
   getAll: () => api.get('/orders/all'),
   getSummary: (date) => api.get('/orders/summary', { params: date ? { date } : {} }),
   getDeliveryConfig: () => api.get('/orders/delivery-config'),
   updateStatus: (orderId, data) => api.put(`/orders/${orderId}/status`, data),
+  markPaymentDone: (id) => api.patch(`/orders/${id}/payment-done`),
+  confirmPayment: (id) => api.put(`/orders/${id}/confirm-payment`),
   cancel: (orderId) => api.post(`/orders/${orderId}/cancel`),
   requestCancel: (orderId, data) => api.post(`/orders/${orderId}/request-cancel`, data),
 };

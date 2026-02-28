@@ -1,12 +1,14 @@
 import { useState, useEffect } from 'react';
 import { orderAPI } from '../services/api';
 import { useSocket } from '../context/SocketContext';
+import { useAuth } from '../context/AuthContext';
 
 export default function OrdersSummary() {
     const [summary, setSummary] = useState(null);
     const [loading, setLoading] = useState(true);
     const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
     const { lastOrderEvent } = useSocket();
+    const { user } = useAuth();
 
     useEffect(() => {
         fetchSummary();
@@ -28,6 +30,15 @@ export default function OrdersSummary() {
             console.error('Failed to fetch summary:', error);
         } finally {
             setLoading(false);
+        }
+    };
+
+    const handleConfirmPayment = async (orderId) => {
+        try {
+            await orderAPI.confirmPayment(orderId);
+            fetchSummary();
+        } catch (error) {
+            alert('Failed to confirm payment');
         }
     };
 
@@ -122,9 +133,15 @@ export default function OrdersSummary() {
                                                 <span className="text-lg font-extrabold text-orange-600">#{order.id}</span>
                                                 <span className="font-semibold text-gray-700">{order.customerName}</span>
                                             </div>
-                                            <div className="flex items-center gap-3">
+                                            <div className="flex items-center gap-2">
                                                 <span className="font-bold text-gray-800">₹{order.totalAmount.toFixed(0)}</span>
-                                                <span className={`text-xs font-bold px-2.5 py-1 rounded-full ${order.status === 'CANCELLED' ? 'bg-red-100 text-red-700' :
+                                                <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-tighter ${order.paymentStatus === 'CONFIRMED' ? 'bg-green-500 text-white' :
+                                                        order.paymentStatus === 'PAYMENT_DONE' ? 'bg-blue-500 text-white' :
+                                                            'bg-amber-100 text-amber-700'
+                                                    }`}>
+                                                    {order.paymentStatus.replace(/_/g, ' ')}
+                                                </span>
+                                                <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-tighter ${order.status === 'CANCELLED' ? 'bg-red-100 text-red-700' :
                                                     order.status === 'DELIVERED' ? 'bg-green-100 text-green-700' :
                                                         'bg-blue-100 text-blue-700'
                                                     }`}>
@@ -132,10 +149,20 @@ export default function OrdersSummary() {
                                                 </span>
                                             </div>
                                         </div>
-                                        <div className="text-sm text-gray-500">
-                                            {order.items.map((i, idx) => (
-                                                <span key={idx}>{idx > 0 && ' • '}{i.name} ×{i.qty}</span>
-                                            ))}
+                                        <div className="flex items-center justify-between">
+                                            <div className="text-sm text-gray-500">
+                                                {order.items.map((i, idx) => (
+                                                    <span key={idx}>{idx > 0 && ' • '}{i.name} ×{i.qty}</span>
+                                                ))}
+                                            </div>
+                                            {user?.role === 'ADMIN' && order.paymentStatus !== 'CONFIRMED' && (
+                                                <button
+                                                    onClick={() => handleConfirmPayment(order.id)}
+                                                    className="text-[10px] font-bold bg-green-50 text-green-700 px-2 py-1 rounded-lg border border-green-200 hover:bg-green-100 transition-colors"
+                                                >
+                                                    Confirm Payment
+                                                </button>
+                                            )}
                                         </div>
                                         {order.specialInstructions && (
                                             <div className="mt-2 bg-yellow-50 border border-yellow-200 rounded-lg px-3 py-2">
