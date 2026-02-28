@@ -45,10 +45,14 @@ export const getKitchenMenu = async (req, res) => {
 export const addKitchenMenuItem = async (req, res) => {
   try {
     const { userId, role } = req.user;
-    const { name, description, price, image, kitchenId: bodyKitchenId } = req.body;
+    const { name, description, price, image, category, kitchenId: bodyKitchenId } = req.body;
 
-    if (!name || !description || price === undefined) {
-      return res.status(400).json({ error: 'Name, description, and price are required' });
+    if (!name || !description || price === undefined || !category) {
+      return res.status(400).json({ error: 'Name, description, price, and category are required' });
+    }
+
+    if (!['BREAKFAST', 'LUNCH'].includes(category)) {
+      return res.status(400).json({ error: 'Category must be BREAKFAST or LUNCH' });
     }
 
     let kitchenId;
@@ -79,6 +83,7 @@ export const addKitchenMenuItem = async (req, res) => {
         description,
         price: parseFloat(price),
         image: image || null,
+        category,
         kitchenId,
         isActive: true,
       },
@@ -97,7 +102,11 @@ export const updateKitchenMenuItem = async (req, res) => {
   try {
     const { userId, role } = req.user;
     const { id } = req.params;
-    const { name, description, price, image, isActive } = req.body;
+    const { name, description, price, image, isActive, category } = req.body;
+
+    if (category !== undefined && !['BREAKFAST', 'LUNCH'].includes(category)) {
+      return res.status(400).json({ error: 'Category must be BREAKFAST or LUNCH' });
+    }
 
     const existing = await prisma.menuItem.findUnique({ where: { id: parseInt(id) } });
     if (!existing) {
@@ -121,6 +130,7 @@ export const updateKitchenMenuItem = async (req, res) => {
         ...(price !== undefined && { price: parseFloat(price) }),
         ...(image !== undefined && { image }),
         ...(isActive !== undefined && { isActive }),
+        ...(category !== undefined && { category }),
       },
       include: { kitchen: true },
     });

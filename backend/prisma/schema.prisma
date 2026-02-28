@@ -61,7 +61,7 @@ model MenuItem {
   isOutOfStock    Boolean      @default(false)
   isLimited       Boolean      @default(false)
   limitedQuantity Int?
-  category        MealCategory @default(BREAKFAST)
+  category        MealCategory
   kitchenId       Int?
   createdAt       DateTime     @default(now())
   updatedAt       DateTime     @updatedAt
