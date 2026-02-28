@@ -1,11 +1,12 @@
 import express from 'express';
-import { placeOrder, getOrders, getAllOrders, updateOrderStatus, cancelOrder, requestCancellation, getOrdersSummary } from '../controllers/orderController.js';
+import { placeOrder, getOrders, getAllOrders, updateOrderStatus, cancelOrder, requestCancellation, getOrdersSummary, getDeliveryConfig } from '../controllers/orderController.js';
 import { authMiddleware } from '../middleware/auth.js';
 import { roleMiddleware } from '../middleware/role.js';
 
 const router = express.Router();
 
 router.post('/', authMiddleware, placeOrder);
+router.get('/delivery-config', getDeliveryConfig);
 router.get('/', authMiddleware, getOrders);
 router.get('/all', authMiddleware, roleMiddleware(['KITCHEN_OWNER', 'ADMIN']), getAllOrders);
 router.get('/summary', authMiddleware, roleMiddleware(['KITCHEN_OWNER', 'ADMIN']), getOrdersSummary);

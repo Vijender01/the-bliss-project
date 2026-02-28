@@ -4,6 +4,22 @@ import { getIO } from '../socket.js';
 const prisma = new PrismaClient();
 const CANCEL_WINDOW_MS = 5 * 60 * 1000;
 
+// Helper: Calculate delivery date based on business rules
+// Window: 3 PM (prev day) to 11 AM (delivery day)
+function calculateDeliveryDate(now = new Date()) {
+  const d = new Date(now);
+  const hour = d.getHours();
+
+  if (hour > 11) {
+    // Orders after 11 AM belong to the next delivery cycle
+    d.setDate(d.getDate() + 1);
+  }
+
+  // Create a Date object that represents UTC midnight of the target date
+  // This ensures consistency regardless of the server's local timezone
+  return new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()));
+}
+
 // Helper: emit to admin + relevant kitchens
 function emitToAdminAndKitchens(eventName, payload, kitchenIds = []) {
   try {
@@ -75,6 +91,7 @@ export const placeOrder = async (req, res) => {
           userId,
           totalAmount,
           specialInstructions: specialInstructions?.trim() || null,
+          deliveryDate: calculateDeliveryDate(),
           items: {
             createMany: {
               data: cartItems.map((item) => ({
@@ -211,6 +228,19 @@ export const requestCancellation = async (req, res) => {
   }
 };
 
+export const getDeliveryConfig = async (req, res) => {
+  try {
+    const deliveryDate = calculateDeliveryDate();
+    res.json({
+      deliveryDate: deliveryDate.toISOString().split('T')[0],
+      displayDate: deliveryDate.toLocaleDateString('en-IN', { day: 'numeric', month: 'long', year: 'numeric' }),
+      windowMessage: "Orders open from 3 PM (prev day) to 11 AM (delivery day)"
+    });
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to fetch delivery config' });
+  }
+};
+
 export const getOrders = async (req, res) => {
   try {
     const userId = req.user.userId;
@@ -278,20 +308,18 @@ export const updateOrderStatus = async (req, res) => {
 export const getOrdersSummary = async (req, res) => {
   try {
     const { date } = req.query; // YYYY-MM-DD
-    let startDate, endDate;
+    let queryDate;
 
     if (date) {
-      startDate = new Date(`${date}T00:00:00.000Z`);
-      endDate = new Date(`${date}T23:59:59.999Z`);
+      queryDate = new Date(`${date}T00:00:00.000Z`);
     } else {
-      const today = new Date();
-      startDate = new Date(today.getFullYear(), today.getMonth(), today.getDate());
-      endDate = new Date(today.getFullYear(), today.getMonth(), today.getDate(), 23, 59, 59, 999);
+      queryDate = calculateDeliveryDate();
     }
 
     const orders = await prisma.order.findMany({
       where: {
-        createdAt: { gte: startDate, lte: endDate },
+        deliveryDate: queryDate,
+        status: { not: 'CANCELLED' }
       },
       include: {
         user: true,
@@ -300,11 +328,9 @@ export const getOrdersSummary = async (req, res) => {
       orderBy: { createdAt: 'desc' },
     });
 
-    const activeOrders = orders.filter(o => o.status !== 'CANCELLED');
-
     // Group items
     const itemMap = {};
-    for (const order of activeOrders) {
+    for (const order of orders) {
       for (const oi of order.items) {
         const key = oi.menuItemId;
         if (!itemMap[key]) {
@@ -326,9 +352,9 @@ export const getOrdersSummary = async (req, res) => {
     const summary = Object.values(itemMap).sort((a, b) => b.totalQuantity - a.totalQuantity);
 
     res.json({
-      date: date || new Date().toISOString().split('T')[0],
-      totalOrders: activeOrders.length,
-      cancelledOrders: orders.length - activeOrders.length,
+      date: queryDate.toISOString().split('T')[0],
+      totalOrders: orders.length,
+      cancelledOrders: 0,
       totalItems: summary.reduce((s, i) => s + i.totalQuantity, 0),
       totalRevenue: summary.reduce((s, i) => s + i.totalRevenue, 0),
       items: summary,
@@ -338,6 +364,7 @@ export const getOrdersSummary = async (req, res) => {
         status: o.status,
         totalAmount: o.totalAmount,
         specialInstructions: o.specialInstructions,
+        deliveryDate: o.deliveryDate,
         createdAt: o.createdAt,
         items: o.items.map(i => ({ name: i.menuItem.name, qty: i.quantity, price: i.price })),
       })),

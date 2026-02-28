@@ -1,25 +1,30 @@
 import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import MenuTile from '../components/MenuTile';
-import { menuAPI } from '../services/api';
+import { menuAPI, orderAPI } from '../services/api';
 import { useAuth } from '../context/AuthContext';
 
 export default function Home() {
   const [menu, setMenu] = useState([]);
+  const [deliveryConfig, setDeliveryConfig] = useState(null);
   const [loading, setLoading] = useState(true);
   const { isAuthenticated, user, role, logout } = useAuth();
   const navigate = useNavigate();
 
   useEffect(() => {
-    fetchMenu();
+    fetchData();
   }, []);
 
-  const fetchMenu = async () => {
+  const fetchData = async () => {
     try {
-      const response = await menuAPI.getAll();
-      setMenu(response.data);
+      const [menuRes, configRes] = await Promise.all([
+        menuAPI.getAll(),
+        orderAPI.getDeliveryConfig()
+      ]);
+      setMenu(menuRes.data);
+      setDeliveryConfig(configRes.data);
     } catch (error) {
-      console.error('Failed to fetch menu:', error);
+      console.error('Failed to fetch data:', error);
     } finally {
       setLoading(false);
     }
@@ -77,8 +82,27 @@ export default function Home() {
 
       {/* Hero Section */}
       <div className="mb-8 bg-gradient-to-r from-orange-400 via-orange-500 to-red-400 text-white rounded-2xl p-6 sm:p-8 shadow-lg shadow-orange-200/50">
-        <h2 className="text-3xl sm:text-4xl font-extrabold mb-2">Welcome to Food Bliss</h2>
-        <p className="text-lg opacity-90">Fresh, delicious homemade food delivered to your doorstep</p>
+        <h2 className="text-3xl sm:text-4xl font-extrabold mb-2 text-white">Welcome to Food Bliss</h2>
+        <p className="text-lg opacity-90 text-white">Fresh, delicious homemade food delivered to your doorstep</p>
+
+        {deliveryConfig && (
+          <div className="mt-6 flex flex-col sm:flex-row gap-4">
+            <div className="bg-white/20 backdrop-blur-md rounded-xl p-3 flex items-center gap-3 border border-white/30">
+              <span className="text-2xl">📅</span>
+              <div>
+                <p className="text-[10px] font-bold uppercase tracking-widest text-orange-100">Ordering for</p>
+                <p className="font-bold text-lg text-white leading-tight">{deliveryConfig.displayDate}</p>
+              </div>
+            </div>
+            <div className="bg-white/10 backdrop-blur-sm rounded-xl p-3 flex items-center gap-3 border border-white/20">
+              <span className="text-2xl">🕒</span>
+              <div>
+                <p className="text-[10px] font-bold uppercase tracking-widest text-orange-100">Order Window</p>
+                <p className="text-sm font-medium text-white">{deliveryConfig.windowMessage}</p>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Delivery & Kitchen Info */}

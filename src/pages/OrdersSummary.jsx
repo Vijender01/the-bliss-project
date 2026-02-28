@@ -41,8 +41,10 @@ export default function OrdersSummary() {
         <div className="max-w-6xl mx-auto px-4 py-8">
             <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-8">
                 <div>
-                    <h1 className="text-3xl font-extrabold text-gray-800">📊 Daily Order Summary</h1>
-                    <p className="text-gray-500 mt-1">Consolidated view of all orders</p>
+                    <h1 className="text-3xl font-extrabold text-gray-800">📊 Consolidated Orders</h1>
+                    <p className="text-orange-600 font-bold mt-1 uppercase tracking-wider text-sm">
+                        Delivery Date: {summary ? new Date(summary.date).toLocaleDateString('en-IN', { day: 'numeric', month: 'long', year: 'numeric' }) : date}
+                    </p>
                 </div>
                 <input
                     type="date"
@@ -123,8 +125,8 @@ export default function OrdersSummary() {
                                             <div className="flex items-center gap-3">
                                                 <span className="font-bold text-gray-800">₹{order.totalAmount.toFixed(0)}</span>
                                                 <span className={`text-xs font-bold px-2.5 py-1 rounded-full ${order.status === 'CANCELLED' ? 'bg-red-100 text-red-700' :
-                                                        order.status === 'DELIVERED' ? 'bg-green-100 text-green-700' :
-                                                            'bg-blue-100 text-blue-700'
+                                                    order.status === 'DELIVERED' ? 'bg-green-100 text-green-700' :
+                                                        'bg-blue-100 text-blue-700'
                                                     }`}>
                                                     {order.status.replace(/_/g, ' ')}
                                                 </span>

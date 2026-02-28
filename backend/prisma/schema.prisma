@@ -94,6 +94,7 @@ model Order {
   cancelledAt            DateTime?
   createdAt              DateTime     @default(now())
   updatedAt              DateTime     @updatedAt
+  deliveryDate           DateTime
 
   user       User @relation(fields: [userId], references: [id])
   items      OrderItem[]

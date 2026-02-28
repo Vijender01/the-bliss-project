@@ -58,6 +58,7 @@ export const orderAPI = {
   getMyOrders: () => api.get('/orders'),
   getAll: () => api.get('/orders/all'),
   getSummary: (date) => api.get('/orders/summary', { params: date ? { date } : {} }),
+  getDeliveryConfig: () => api.get('/orders/delivery-config'),
   updateStatus: (orderId, data) => api.put(`/orders/${orderId}/status`, data),
   cancel: (orderId) => api.post(`/orders/${orderId}/cancel`),
   requestCancel: (orderId, data) => api.post(`/orders/${orderId}/request-cancel`, data),
