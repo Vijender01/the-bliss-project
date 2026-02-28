@@ -4,9 +4,23 @@ import { useSocket } from '../context/SocketContext';
 import { useAuth } from '../context/AuthContext';
 
 export default function OrdersSummary() {
+    const calculateDefaultDate = () => {
+        const now = new Date();
+        const hour = now.getHours();
+        const d = new Date(now);
+
+        // Match backend logic: orders after 3 PM (15:00) 
+        // OR before 11 AM belong to tomorrow/today delivery.
+        // For the summary dashboard, if it's after 3 PM, show tomorrow's orders by default.
+        if (hour >= 15) {
+            d.setDate(d.getDate() + 1);
+        }
+        return d.toISOString().split('T')[0];
+    };
+
     const [summary, setSummary] = useState(null);
     const [loading, setLoading] = useState(true);
-    const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
+    const [date, setDate] = useState(calculateDefaultDate());
     const { lastOrderEvent } = useSocket();
     const { user } = useAuth();
 
@@ -136,8 +150,8 @@ export default function OrdersSummary() {
                                             <div className="flex items-center gap-2">
                                                 <span className="font-bold text-gray-800">₹{order.totalAmount.toFixed(0)}</span>
                                                 <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-tighter ${order.paymentStatus === 'CONFIRMED' ? 'bg-green-500 text-white' :
-                                                        order.paymentStatus === 'PAYMENT_DONE' ? 'bg-blue-500 text-white' :
-                                                            'bg-amber-100 text-amber-700'
+                                                    order.paymentStatus === 'PAYMENT_DONE' ? 'bg-blue-500 text-white' :
+                                                        'bg-amber-100 text-amber-700'
                                                     }`}>
                                                     {order.paymentStatus.replace(/_/g, ' ')}
                                                 </span>
