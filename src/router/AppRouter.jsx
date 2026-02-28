@@ -9,8 +9,10 @@ import OrderHistory from '../pages/OrderHistory';
 import AdminPanel from '../pages/AdminPanel';
 import Profile from '../pages/Profile';
 import ManageMenu from '../pages/ManageMenu';
+import AlertModal from '../components/AlertModal';
 import { AuthProvider } from '../context/AuthContext';
 import { CartProvider } from '../context/CartContext';
+import { SocketProvider } from '../context/SocketContext';
 
 const ProtectedRoute = ({ children }) => {
   const token = localStorage.getItem('token');
@@ -33,95 +35,49 @@ export default function AppRouter() {
   return (
     <AuthProvider>
       <CartProvider>
-        <BrowserRouter>
-          <Routes>
-            <Route path="/login" element={<Login />} />
+        <SocketProvider>
+          <BrowserRouter>
+            {/* Global Alert Modal — appears on ALL pages */}
+            <AlertModal />
 
-            <Route
-              path="/"
-              element={
-                <MainLayout>
-                  <Home />
-                </MainLayout>
-              }
-            />
+            <Routes>
+              <Route path="/login" element={<Login />} />
 
-            <Route
-              path="/item/:id"
-              element={
-                <MainLayout>
-                  <ItemDetails />
-                </MainLayout>
-              }
-            />
+              <Route path="/" element={<MainLayout><Home /></MainLayout>} />
+              <Route path="/item/:id" element={<MainLayout><ItemDetails /></MainLayout>} />
 
-            <Route
-              path="/profile"
-              element={
-                <CustomerOnlyRoute>
-                  <MainLayout>
-                    <Profile />
-                  </MainLayout>
-                </CustomerOnlyRoute>
-              }
-            />
+              <Route path="/profile" element={
+                <CustomerOnlyRoute><MainLayout><Profile /></MainLayout></CustomerOnlyRoute>
+              } />
 
-            <Route
-              path="/cart"
-              element={
-                <ProtectedRoute>
-                  <MainLayout>
-                    <Cart />
-                  </MainLayout>
-                </ProtectedRoute>
-              }
-            />
+              <Route path="/cart" element={
+                <ProtectedRoute><MainLayout><Cart /></MainLayout></ProtectedRoute>
+              } />
 
-            <Route
-              path="/orders"
-              element={
-                <ProtectedRoute>
-                  <MainLayout>
-                    <OrderHistory />
-                  </MainLayout>
-                </ProtectedRoute>
-              }
-            />
+              <Route path="/orders" element={
+                <ProtectedRoute><MainLayout><OrderHistory /></MainLayout></ProtectedRoute>
+              } />
 
-            <Route
-              path="/kitchen"
-              element={
+              <Route path="/kitchen" element={
                 <RoleRoute allowedRoles={['KITCHEN_OWNER', 'ADMIN']}>
-                  <MainLayout>
-                    <KitchenDashboard />
-                  </MainLayout>
+                  <MainLayout><KitchenDashboard /></MainLayout>
                 </RoleRoute>
-              }
-            />
+              } />
 
-            <Route
-              path="/admin"
-              element={
+              <Route path="/admin" element={
                 <RoleRoute allowedRoles={['ADMIN']}>
-                  <MainLayout>
-                    <AdminPanel />
-                  </MainLayout>
+                  <MainLayout><AdminPanel /></MainLayout>
                 </RoleRoute>
-              }
-            />
+              } />
 
-            <Route
-              path="/manage-menu"
-              element={
+              <Route path="/manage-menu" element={
                 <RoleRoute allowedRoles={['KITCHEN_OWNER', 'ADMIN']}>
-                  <MainLayout>
-                    <ManageMenu />
-                  </MainLayout>
+                  <MainLayout><ManageMenu /></MainLayout>
                 </RoleRoute>
-              }
-            />
-          </Routes>
-        </BrowserRouter>
+              } />
+            </Routes>
+          </BrowserRouter>
+        </SocketProvider>
       </CartProvider>
     </AuthProvider>
   );

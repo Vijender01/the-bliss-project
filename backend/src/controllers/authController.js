@@ -23,11 +23,11 @@ export const register = async (req, res) => {
       data: { name, email, passwordHash, role: 'CUSTOMER' },
     });
 
-    const token = generateToken(user.id, user.role);
+    const token = generateToken(user.id, user.role, user.kitchenId);
 
     res.status(201).json({
       token,
-      user: { id: user.id, name: user.name, email: user.email, role: user.role },
+      user: { id: user.id, name: user.name, email: user.email, role: user.role, kitchenId: user.kitchenId },
     });
   } catch (error) {
     console.error('Register error:', error);
@@ -53,11 +53,11 @@ export const login = async (req, res) => {
       return res.status(401).json({ error: 'Invalid credentials' });
     }
 
-    const token = generateToken(user.id, user.role);
+    const token = generateToken(user.id, user.role, user.kitchenId);
 
     res.json({
       token,
-      user: { id: user.id, name: user.name, email: user.email, role: user.role },
+      user: { id: user.id, name: user.name, email: user.email, role: user.role, kitchenId: user.kitchenId },
     });
   } catch (error) {
     console.error('Login error:', error);

@@ -14,6 +14,7 @@ export default function MenuTile({ item }) {
 
     const isOutOfStock = item.isOutOfStock;
     const isLimited = item.isLimited;
+    const maxQty = isLimited ? 2 : 99;
 
     const handleNavigate = () => {
         navigate(`/item/${item.id}`);
@@ -54,7 +55,7 @@ export default function MenuTile({ item }) {
             {isLimited && !isOutOfStock && (
                 <div className="absolute top-3 right-3 z-10">
                     <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold bg-yellow-400 text-yellow-900 shadow-sm animate-pulse">
-                        ⚠️ Limited
+                        ⚠️ Limited (Max 2)
                     </span>
                 </div>
             )}
@@ -73,7 +74,6 @@ export default function MenuTile({ item }) {
 
             {/* Content */}
             <div className="p-4">
-                {/* Title — Clickable */}
                 <h3
                     onClick={handleNavigate}
                     className="text-lg font-bold text-gray-800 line-clamp-1 cursor-pointer hover:text-orange-600 transition-colors"
@@ -81,25 +81,29 @@ export default function MenuTile({ item }) {
                     {item.name}
                 </h3>
 
-                {/* Description — Not clickable */}
                 <p className="text-gray-500 text-sm mt-1 line-clamp-1">{item.description}</p>
 
-                {/* Kitchen name */}
                 {item.kitchen && (
                     <p className="text-xs text-gray-400 mt-1">from {item.kitchen.name}</p>
                 )}
 
-                {/* Price */}
+                {/* Limited stock warning */}
+                {isLimited && !isOutOfStock && item.limitedQuantity != null && item.limitedQuantity <= 5 && (
+                    <p className="text-xs text-red-500 font-bold mt-1">
+                        🔥 Only {item.limitedQuantity} left!
+                    </p>
+                )}
+
                 <div className="mt-3 mb-3">
                     <span className="text-2xl font-extrabold text-orange-600">₹{item.price}</span>
                 </div>
 
-                {/* Quantity + Add to Cart */}
                 <div className="flex items-center justify-between gap-2 pt-3 border-t border-gray-100">
                     <QuantitySelector
                         value={quantity}
                         onChange={setQuantity}
                         disabled={isOutOfStock}
+                        max={maxQty}
                         size="sm"
                     />
 
