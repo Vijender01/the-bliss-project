@@ -36,6 +36,7 @@ export default function Header() {
       { label: 'Kitchen', path: '/kitchen' },
       { label: 'Summary', path: '/orders-summary' },
       { label: 'Manage Menu', path: '/manage-menu' },
+      { label: 'Status', path: '/status' },
     ],
   };
 

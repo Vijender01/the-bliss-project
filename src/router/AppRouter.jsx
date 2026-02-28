@@ -10,6 +10,7 @@ import OrdersSummary from '../pages/OrdersSummary';
 import AdminPanel from '../pages/AdminPanel';
 import Profile from '../pages/Profile';
 import ManageMenu from '../pages/ManageMenu';
+import SystemHealth from '../pages/SystemHealth';
 import AlertModal from '../components/AlertModal';
 import { AuthProvider } from '../context/AuthContext';
 import { CartProvider } from '../context/CartContext';
@@ -79,6 +80,12 @@ export default function AppRouter() {
               <Route path="/manage-menu" element={
                 <RoleRoute allowedRoles={['KITCHEN_OWNER', 'ADMIN']}>
                   <MainLayout><ManageMenu /></MainLayout>
+                </RoleRoute>
+              } />
+
+              <Route path="/status" element={
+                <RoleRoute allowedRoles={['ADMIN']}>
+                  <MainLayout><SystemHealth /></MainLayout>
                 </RoleRoute>
               } />
             </Routes>

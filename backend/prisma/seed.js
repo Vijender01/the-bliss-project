@@ -24,114 +24,133 @@ const testUsers = [
   }
 ];
 
-const kitchens = [
-  { name: "Desi Delights Kitchen" },
-  { name: "South Indian Corner" }
+const mainKitchenName = "Food Bliss";
+
+const menuItems = [
+  {
+    name: "Paneer Parantha",
+    price: 80,
+    image: "🧀",
+    category: "BREAKFAST",
+    description: "Soft paratha stuffed with cottage cheese and spices"
+  },
+  {
+    name: "Aalu Parantha",
+    price: 60,
+    image: "🥔",
+    category: "BREAKFAST",
+    description: "Crispy paratha filled with spiced potatoes"
+  },
+  {
+    name: "Poshtik Poha",
+    price: 70,
+    image: "🌾",
+    category: "BREAKFAST",
+    description: "Nutritious flattened rice with vegetables and peanuts"
+  },
+  {
+    name: "Thali Combo",
+    price: 150,
+    image: "🍛",
+    category: "LUNCH",
+    description: "Complete meal with dal, curry, rice, and bread"
+  },
+  {
+    name: "Chole Bhature",
+    price: 120,
+    image: "🍳",
+    category: "LUNCH",
+    description: "Fluffy fried bread served with spiced chickpeas"
+  },
+  {
+    name: "Rajma Rice",
+    price: 85,
+    image: "🍚",
+    category: "LUNCH",
+    description: "Rice with kidney beans curry and onions"
+  },
+  {
+    name: "Idli Sambar",
+    price: 70,
+    image: "🍛",
+    category: "BREAKFAST",
+    description: "Steamed rice cakes served with vegetable curry"
+  },
+  {
+    name: "Dosa with Chutney",
+    price: 90,
+    image: "🥙",
+    category: "BREAKFAST",
+    description: "Crispy rice and lentil crepe with coconut chutney"
+  }
 ];
 
-const menuItemsByKitchen = {
-  "Desi Delights Kitchen": [
-    {
-      name: "Paneer Parantha",
-      price: 80,
-      image: "🧀",
-      description: "Soft paratha stuffed with cottage cheese and spices"
-    },
-    {
-      name: "Aalu Parantha",
-      price: 60,
-      image: "🥔",
-      description: "Crispy paratha filled with spiced potatoes"
-    },
-    {
-      name: "Poshtik Poha",
-      price: 70,
-      image: "🌾",
-      description: "Nutritious flattened rice with vegetables and peanuts"
-    },
-    {
-      name: "Thali Combo",
-      price: 150,
-      image: "🍛",
-      description: "Complete meal with dal, curry, rice, and bread"
-    },
-    {
-      name: "Chole Bhature",
-      price: 120,
-      image: "🍳",
-      description: "Fluffy fried bread served with spiced chickpeas"
-    },
-    {
-      name: "Rajma Rice",
-      price: 85,
-      image: "🍚",
-      description: "Rice with kidney beans curry and onions"
-    }
-  ],
-  "South Indian Corner": [
-    {
-      name: "Idli Sambar",
-      price: 70,
-      image: "�",
-      description: "Steamed rice cakes served with vegetable curry"
-    },
-    {
-      name: "Dosa with Chutney",
-      price: 90,
-      image: "🥙",
-      description: "Crispy rice and lentil crepe with coconut chutney"
-    }
-  ]
-};
-
 async function main() {
-  console.log('🌱 Starting database seed...');
+  console.log('🌱 Starting database seed (Idempotent)...');
 
-  // Clear existing data (respecting foreign keys)
-  await prisma.orderItem.deleteMany({});
-  await prisma.order.deleteMany({});
-  await prisma.cartItem.deleteMany({});
-  await prisma.menuItem.deleteMany({});
-  // Remove kitchen reference from users before deleting kitchens
-  await prisma.user.updateMany({ data: { kitchenId: null } });
-  await prisma.user.deleteMany({});
-  await prisma.kitchen.deleteMany({});
-  console.log('✓ Cleared existing data');
+  // 1. Create/Ensure primary kitchen exists
+  console.log(`\n🏠 Ensuring kitchen "${mainKitchenName}" exists...`);
+  let kitchen = await prisma.kitchen.findFirst({
+    where: { name: mainKitchenName }
+  });
 
-  // Create kitchens
-  console.log('\n🏠 Creating kitchens...');
-  const createdKitchens = {};
-  for (const k of kitchens) {
-    const created = await prisma.kitchen.create({ data: { name: k.name } });
-    createdKitchens[k.name] = created;
-    console.log(`✓ Created kitchen: ${created.name} (ID: ${created.id})`);
+  if (!kitchen) {
+    kitchen = await prisma.kitchen.create({
+      data: { name: mainKitchenName }
+    });
+    console.log(`✓ Created kitchen: ${kitchen.name} (ID: ${kitchen.id})`);
+  } else {
+    console.log(`ℹ Kitchen "${mainKitchenName}" already exists.`);
   }
 
-  // Create test users
-  console.log('\n📝 Creating test users...');
+  // 2. Create/Ensure test users exist
+  console.log('\n📝 Ensuring test users exist...');
   for (const user of testUsers) {
-    const hashedPassword = await bcryptjs.hash(user.password, 10);
-    const data = {
-      name: user.name,
-      email: user.email,
-      passwordHash: hashedPassword,
-      role: user.role,
-    };
+    const existingUser = await prisma.user.findUnique({
+      where: { email: user.email }
+    });
 
-    // Assign kitchen owner to first kitchen
-    if (user.role === 'KITCHEN_OWNER') {
-      data.kitchenId = createdKitchens["Desi Delights Kitchen"].id;
+    if (!existingUser) {
+      const hashedPassword = await bcryptjs.hash(user.password, 10);
+      const data = {
+        name: user.name,
+        email: user.email,
+        passwordHash: hashedPassword,
+        role: user.role,
+      };
+
+      // Assign kitchen owner to our main kitchen
+      if (user.role === 'KITCHEN_OWNER') {
+        data.kitchenId = kitchen.id;
+      }
+
+      const created = await prisma.user.create({ data });
+      console.log(`✓ Created ${user.role}: ${user.email}`);
+    } else {
+      console.log(`ℹ User ${user.email} already exists.`);
+      
+      // Update role/kitchen if needed
+      if (user.role === 'KITCHEN_OWNER' && !existingUser.kitchenId) {
+        await prisma.user.update({
+          where: { id: existingUser.id },
+          data: { kitchenId: kitchen.id }
+        });
+        console.log(`  → Assigned existing kitchen owner to "${mainKitchenName}"`);
+      }
     }
-
-    const created = await prisma.user.create({ data });
-    console.log(`✓ Created ${user.role}: ${user.email} (password: ${user.password})${user.role === 'KITCHEN_OWNER' ? ` → Kitchen: Desi Delights Kitchen` : ''}`);
   }
 
-  // Create menu items per kitchen
-  console.log('\n🍽️  Creating menu items...');
-  for (const [kitchenName, items] of Object.entries(menuItemsByKitchen)) {
-    const kitchen = createdKitchens[kitchenName];
-    for (const item of items) {
+  // 3. Create/Ensure menu items exist
+  console.log('\n🍽️  Ensuring menu items exist...');
+  for (const item of menuItems) {
+    const existingItem = await prisma.menuItem.findFirst({
+      where: { 
+        name: item.name,
+        kitchenId: kitchen.id
+      }
+    });
+
+    if (!existingItem) {
       const created = await prisma.menuItem.create({
         data: {
           ...item,
@@ -139,11 +158,13 @@ async function main() {
           kitchenId: kitchen.id,
         },
       });
-      console.log(`✓ Created: ${created.name} (₹${created.price}) → ${kitchenName}`);
+      console.log(`✓ Created menu item: ${created.name} (₹${created.price})`);
+    } else {
+      console.log(`ℹ Menu item "${item.name}" already exists.`);
     }
   }
 
-  console.log('\n✅ Seeding complete!');
+  console.log('\n✅ Seeding complete! Data is safe and won\'t be duplicated.');
   console.log('\n📋 Login Credentials:');
   console.log('  Admin:    admin@foodbliss.com / Admin@123');
   console.log('  Kitchen:  kitchen@foodbliss.com / Kitchen@123');

@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
 
 export default function AdminPanel() {
   const [activeTab, setActiveTab] = useState('users');
@@ -61,6 +62,12 @@ export default function AdminPanel() {
         >
           Create User
         </button>
+        <Link
+          to="/status"
+          className="px-4 py-2 font-semibold text-gray-600 hover:text-orange-600 transition-colors"
+        >
+          System Health 📊
+        </Link>
       </div>
 
       {activeTab === 'users' && (

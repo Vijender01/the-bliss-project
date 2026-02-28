@@ -9,3 +9,4 @@ dist
 backend/.env
 backend/.env.production
 backend/logs/
+*.log
