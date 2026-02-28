@@ -1,13 +1,14 @@
 import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import MenuCard from '../components/MenuCard';
+import MenuTile from '../components/MenuTile';
 import { menuAPI } from '../services/api';
+import { useAuth } from '../context/AuthContext';
 
 export default function Home() {
   const [menu, setMenu] = useState([]);
   const [loading, setLoading] = useState(true);
+  const { isAuthenticated, user, role, logout } = useAuth();
   const navigate = useNavigate();
-  const user = JSON.parse(localStorage.getItem('user') || '{}');
 
   useEffect(() => {
     fetchMenu();
@@ -24,46 +25,39 @@ export default function Home() {
     }
   };
 
+  const handleLogout = () => {
+    logout();
+    navigate('/login');
+  };
+
   return (
     <div className="py-6 px-4 sm:px-6 lg:px-8">
       {/* User Info & Actions */}
-      {user && user.id ? (
-        <div className="mb-6 bg-blue-50 p-4 rounded-lg flex justify-between items-center">
+      {isAuthenticated ? (
+        <div className="mb-6 bg-gradient-to-r from-blue-50 to-indigo-50 p-4 rounded-xl flex justify-between items-center border border-blue-100">
           <div>
-            <p className="text-sm text-gray-600">Logged in as</p>
-            <p className="font-semibold text-gray-800">{user.name} ({user.role})</p>
+            <p className="text-sm text-gray-500">Welcome back,</p>
+            <p className="font-bold text-gray-800">{user?.name} <span className="text-xs font-medium bg-orange-100 text-orange-700 px-2 py-0.5 rounded-full ml-1">{role}</span></p>
           </div>
-          <div className="space-x-2 flex">
-            <Link
-              to="/cart"
-              className="bg-orange-600 hover:bg-orange-700 text-white px-4 py-2 rounded-lg transition"
-            >
-              🛒 Cart
-            </Link>
-            <button
-              onClick={() => {
-                localStorage.removeItem('token');
-                localStorage.removeItem('user');
-                navigate('/login');
-              }}
-              className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg transition"
-            >
-              Logout
-            </button>
-          </div>
+          <button
+            onClick={handleLogout}
+            className="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-lg transition text-sm font-medium"
+          >
+            Logout
+          </button>
         </div>
       ) : (
-        <div className="mb-6 bg-blue-50 p-4 rounded-lg flex justify-between items-center">
+        <div className="mb-6 bg-gradient-to-r from-blue-50 to-indigo-50 p-4 rounded-xl flex justify-between items-center border border-blue-100">
           <p className="text-gray-700">Please login to place orders</p>
-          <Link to="/login" className="bg-orange-600 hover:bg-orange-700 text-white px-6 py-2 rounded-lg transition">
+          <Link to="/login" className="bg-orange-500 hover:bg-orange-600 text-white px-6 py-2 rounded-lg transition font-medium">
             Login
           </Link>
         </div>
       )}
 
       {/* Hero Section */}
-      <div className="mb-8 bg-gradient-to-r from-orange-400 to-orange-500 text-white rounded-lg p-6 sm:p-8">
-        <h2 className="text-3xl sm:text-4xl font-bold mb-2">
+      <div className="mb-8 bg-gradient-to-r from-orange-400 via-orange-500 to-red-400 text-white rounded-2xl p-6 sm:p-8 shadow-lg shadow-orange-200/50">
+        <h2 className="text-3xl sm:text-4xl font-extrabold mb-2">
           Welcome to Food Bliss
         </h2>
         <p className="text-lg opacity-90">
@@ -72,32 +66,41 @@ export default function Home() {
       </div>
 
       {/* Menu Title */}
-      <div className="mb-6">
-        <h3 className="text-2xl sm:text-3xl font-bold text-gray-800">
-          Our Menu
-        </h3>
-        <p className="text-gray-600 mt-1">
-          {loading ? 'Loading...' : menu.length} delicious items available
-        </p>
+      <div className="mb-6 flex items-end justify-between">
+        <div>
+          <h3 className="text-2xl sm:text-3xl font-extrabold text-gray-800">
+            Our Menu
+          </h3>
+          <p className="text-gray-500 mt-1">
+            {loading ? 'Loading...' : `${menu.length} delicious items available`}
+          </p>
+        </div>
       </div>
 
-      {/* Menu Grid - Responsive Grid */}
+      {/* Menu Grid */}
       {loading ? (
-        <div className="text-center py-12">
-          <p className="text-gray-600">Loading menu...</p>
+        <div className="text-center py-16">
+          <div className="inline-block w-10 h-10 border-4 border-orange-200 border-t-orange-500 rounded-full animate-spin" />
+          <p className="text-gray-500 mt-4">Loading menu...</p>
+        </div>
+      ) : menu.length === 0 ? (
+        <div className="text-center py-16 bg-white rounded-2xl shadow-sm border border-gray-100">
+          <span className="text-6xl block mb-4">🍽️</span>
+          <p className="text-xl font-semibold text-gray-700">No items available right now</p>
+          <p className="text-gray-500 mt-2">Check back later for fresh options!</p>
         </div>
       ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
           {menu.map((item) => (
-            <MenuCard key={item.id} item={item} />
+            <MenuTile key={item.id} item={item} />
           ))}
         </div>
       )}
 
       {/* Footer Info */}
-      <div className="mt-12 py-6 border-t border-gray-300">
-        <p className="text-center text-gray-600 text-sm">
-          ✨ Phase 2 Complete: Full ordering system, cart management, and kitchen dashboard!
+      <div className="mt-12 py-6 border-t border-gray-200">
+        <p className="text-center text-gray-400 text-sm">
+          ✨ Multi-Kitchen System Active — Fresh food from multiple kitchens!
         </p>
       </div>
     </div>

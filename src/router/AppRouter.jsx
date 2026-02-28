@@ -10,6 +10,7 @@ import AdminPanel from '../pages/AdminPanel';
 import Profile from '../pages/Profile';
 import ManageMenu from '../pages/ManageMenu';
 import { AuthProvider } from '../context/AuthContext';
+import { CartProvider } from '../context/CartContext';
 
 const ProtectedRoute = ({ children }) => {
   const token = localStorage.getItem('token');
@@ -31,95 +32,97 @@ const CustomerOnlyRoute = ({ children }) => {
 export default function AppRouter() {
   return (
     <AuthProvider>
-      <BrowserRouter>
-        <Routes>
-          <Route path="/login" element={<Login />} />
+      <CartProvider>
+        <BrowserRouter>
+          <Routes>
+            <Route path="/login" element={<Login />} />
 
-          <Route
-            path="/"
-            element={
-              <MainLayout>
-                <Home />
-              </MainLayout>
-            }
-          />
-
-          <Route
-            path="/item/:id"
-            element={
-              <MainLayout>
-                <ItemDetails />
-              </MainLayout>
-            }
-          />
-
-          <Route
-            path="/profile"
-            element={
-              <CustomerOnlyRoute>
+            <Route
+              path="/"
+              element={
                 <MainLayout>
-                  <Profile />
+                  <Home />
                 </MainLayout>
-              </CustomerOnlyRoute>
-            }
-          />
+              }
+            />
 
-          <Route
-            path="/cart"
-            element={
-              <ProtectedRoute>
+            <Route
+              path="/item/:id"
+              element={
                 <MainLayout>
-                  <Cart />
+                  <ItemDetails />
                 </MainLayout>
-              </ProtectedRoute>
-            }
-          />
+              }
+            />
 
-          <Route
-            path="/orders"
-            element={
-              <ProtectedRoute>
-                <MainLayout>
-                  <OrderHistory />
-                </MainLayout>
-              </ProtectedRoute>
-            }
-          />
+            <Route
+              path="/profile"
+              element={
+                <CustomerOnlyRoute>
+                  <MainLayout>
+                    <Profile />
+                  </MainLayout>
+                </CustomerOnlyRoute>
+              }
+            />
 
-          <Route
-            path="/kitchen"
-            element={
-              <RoleRoute allowedRoles={['KITCHEN_OWNER', 'ADMIN']}>
-                <MainLayout>
-                  <KitchenDashboard />
-                </MainLayout>
-              </RoleRoute>
-            }
-          />
+            <Route
+              path="/cart"
+              element={
+                <ProtectedRoute>
+                  <MainLayout>
+                    <Cart />
+                  </MainLayout>
+                </ProtectedRoute>
+              }
+            />
 
-          <Route
-            path="/admin"
-            element={
-              <RoleRoute allowedRoles={['ADMIN']}>
-                <MainLayout>
-                  <AdminPanel />
-                </MainLayout>
-              </RoleRoute>
-            }
-          />
+            <Route
+              path="/orders"
+              element={
+                <ProtectedRoute>
+                  <MainLayout>
+                    <OrderHistory />
+                  </MainLayout>
+                </ProtectedRoute>
+              }
+            />
 
-          <Route
-            path="/manage-menu"
-            element={
-              <RoleRoute allowedRoles={['KITCHEN_OWNER', 'ADMIN']}>
-                <MainLayout>
-                  <ManageMenu />
-                </MainLayout>
-              </RoleRoute>
-            }
-          />
-        </Routes>
-      </BrowserRouter>
+            <Route
+              path="/kitchen"
+              element={
+                <RoleRoute allowedRoles={['KITCHEN_OWNER', 'ADMIN']}>
+                  <MainLayout>
+                    <KitchenDashboard />
+                  </MainLayout>
+                </RoleRoute>
+              }
+            />
+
+            <Route
+              path="/admin"
+              element={
+                <RoleRoute allowedRoles={['ADMIN']}>
+                  <MainLayout>
+                    <AdminPanel />
+                  </MainLayout>
+                </RoleRoute>
+              }
+            />
+
+            <Route
+              path="/manage-menu"
+              element={
+                <RoleRoute allowedRoles={['KITCHEN_OWNER', 'ADMIN']}>
+                  <MainLayout>
+                    <ManageMenu />
+                  </MainLayout>
+                </RoleRoute>
+              }
+            />
+          </Routes>
+        </BrowserRouter>
+      </CartProvider>
     </AuthProvider>
   );
 }
