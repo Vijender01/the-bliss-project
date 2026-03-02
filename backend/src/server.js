@@ -11,6 +11,7 @@ import menuRoutes from './routes/menu.js';
 import cartRoutes from './routes/cart.js';
 import orderRoutes from './routes/orders.js';
 import kitchenRoutes from './routes/kitchen.js';
+import { sendTelegramAlert } from './services/telegram.js';
 
 // Load env
 const envFile = process.env.NODE_ENV === 'production' ? '.env.production' : '.env';
@@ -83,8 +84,30 @@ app.use('/api/cart', apiLimiter, cartRoutes);
 app.use('/api/orders', apiLimiter, orderRoutes);
 app.use('/api/kitchen', apiLimiter, kitchenRoutes);
 
-app.get('/api/health', (req, res) => {
-  res.json({ status: 'ok', timestamp: new Date().toISOString() });
+app.get('/api/health', async (req, res) => {
+  let dbStatus = 'connected';
+  try {
+    await prisma.$queryRaw`SELECT 1`;
+  } catch (e) {
+    dbStatus = 'disconnected';
+  }
+  
+  res.json({ 
+    status: 'OK', 
+    db: dbStatus,
+    uptime: Math.floor(process.uptime()),
+    timestamp: new Date().toISOString() 
+  });
+});
+
+app.post('/api/uptime-alert', async (req, res) => {
+  const { status } = req.body;
+  const message = status === 'DOWN' 
+    ? '🚨 <b>Food Bliss is DOWN</b>' 
+    : '✅ <b>Food Bliss is BACK ONLINE</b>';
+  
+  await sendTelegramAlert(message);
+  res.json({ success: true });
 });
 
 app.get('/api/status', async (req, res) => {
