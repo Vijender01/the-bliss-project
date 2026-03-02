@@ -1,5 +1,6 @@
 import { PrismaClient } from '@prisma/client';
 import { getIO } from '../socket.js';
+import { formatAndSendOrderAlert, formatAndSendSummaryAlert } from '../services/telegram.js';
 
 const prisma = new PrismaClient();
 const CANCEL_WINDOW_MS = 5 * 60 * 1000;
@@ -110,7 +111,6 @@ export const placeOrder = async (req, res) => {
     });
 
     // Emit new order event for real-time dashboard
-    const kitchenIds = order.items.map(i => i.menuItem.kitchenId);
     emitToAdminAndKitchens('orderUpdated', {
       type: 'NEW_ORDER',
       orderId: order.id,
@@ -119,7 +119,11 @@ export const placeOrder = async (req, res) => {
       items: order.items.map(i => ({ name: i.menuItem.name, qty: i.quantity })),
       timestamp: new Date().toISOString(),
     }, kitchenIds);
-
+ 
+    // Async: Send Telegram updates
+    formatAndSendOrderAlert(order).catch(console.error);
+    formatAndSendSummaryAlert(prisma, order.deliveryDate).catch(console.error);
+ 
     res.status(201).json(order);
   } catch (error) {
     console.error('Place order error:', error);

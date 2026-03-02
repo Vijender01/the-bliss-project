@@ -139,16 +139,20 @@ export function CartProvider({ children }) {
 
     // Clear cart
     const clearCart = useCallback(async () => {
+        const wasEmpty = items.length === 0;
         setItems([]);
         setTotal(0);
         setItemCount(0);
 
-        try {
-            await cartAPI.clear();
-        } catch (err) {
-            fetchCart();
+        if (!wasEmpty) {
+            try {
+                await cartAPI.clear();
+            } catch (err) {
+                console.warn('Clear cart API error (may have been cleared by order):', err.message);
+                fetchCart();
+            }
         }
-    }, [fetchCart]);
+    }, [items.length, fetchCart]);
 
     const openDrawer = useCallback(() => setDrawerOpen(true), []);
     const closeDrawer = useCallback(() => setDrawerOpen(false), []);

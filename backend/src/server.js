@@ -106,7 +106,7 @@ app.post('/api/uptime-alert', async (req, res) => {
     ? '🚨 <b>Food Bliss is DOWN</b>' 
     : '✅ <b>Food Bliss is BACK ONLINE</b>';
   
-  await sendTelegramAlert(message);
+  await sendTelegramAlert(message, 'SYSTEM');
   res.json({ success: true });
 });
 
